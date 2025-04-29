@@ -18,11 +18,6 @@ project(
 # Run prelude script to set up environment
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/epilogue.cmake)
 
-option(LIBFMT_VENDORIZE "Enable vendorized libfmt" ON)
-
-find_package(fmt REQUIRED)
-set_target_properties(fmt PROPERTIES EXCLUDE_FROM_ALL TRUE)
-
 find_package(DBus1 REQUIRED)
 
 if(NOT DEFINED SIMPLEDBUS_SANITIZE AND DEFINED SIMPLEBLUEZ_SANITIZE)
@@ -41,7 +36,7 @@ endif()
 set(SIMPLEBLUEZ_INCLUDE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../simpledbus/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../external/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/external)
 
 set(SIMPLEBLUEZ_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/BluezRoot.cpp
@@ -110,13 +105,16 @@ if(SIMPLEBLUEZ_USE_SESSION_DBUS)
     list(APPEND PRIVATE_COMPILE_DEFINITIONS SIMPLEBLUEZ_USE_SESSION_DBUS)
 endif()
 
+list(APPEND PRIVATE_COMPILE_DEFINITIONS FMT_HEADER_ONLY)
+
 target_link_libraries(simplebluez PUBLIC ${DBus1_LIBRARIES})
-target_link_libraries(simplebluez PRIVATE $<BUILD_INTERFACE:fmt::fmt-header-only>)
 
 target_include_directories(simplebluez PRIVATE ${SIMPLEBLUEZ_INCLUDE})
+target_include_directories(simplebluez PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/external)
+target_include_directories(simplebluez PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/internal)
 target_include_directories(simplebluez INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../external/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/external>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../simpledbus/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     $<INSTALL_INTERFACE:${DBus1_INCLUDE_DIR}>
@@ -152,7 +150,7 @@ install(
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/simplebluez)
 
 install(
-    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../external/include/
+    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../dependencies/external/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/simplebluez)
 
 install(

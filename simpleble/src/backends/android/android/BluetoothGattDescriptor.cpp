@@ -34,31 +34,35 @@ void BluetoothGattDescriptor::initialize() {
     }
 }
 
-BluetoothGattDescriptor::BluetoothGattDescriptor() { initialize(); }
+void BluetoothGattDescriptor::check_initialized() const {
+    if (!_obj) throw std::runtime_error("BluetoothGattDescriptor is not initialized");
+}
 
-BluetoothGattDescriptor::BluetoothGattDescriptor(JNI::Object obj) : BluetoothGattDescriptor() { _obj = obj; }
+BluetoothGattDescriptor::BluetoothGattDescriptor() {}
+
+BluetoothGattDescriptor::BluetoothGattDescriptor(JNI::Object obj) : _obj(obj) {}
 
 std::string BluetoothGattDescriptor::getUuid() {
-    if (!_obj) return "";
+    check_initialized();
 
     JNI::Object uuidObj = _obj.call_object_method(_method_getUuid);
-    if (!uuidObj) return "";
+    if (!uuidObj) throw std::runtime_error("Failed to get UUID");
 
     return UUID(uuidObj).toString();
 }
 
 std::vector<uint8_t> BluetoothGattDescriptor::getValue() {
-    if (!_obj) return {};
+    check_initialized();
 
     return _obj.call_byte_array_method(_method_getValue);
 }
 
-bool BluetoothGattDescriptor::setValue(const std::vector<uint8_t> &value) {
-    if (!_obj) return false;
+bool BluetoothGattDescriptor::setValue(const std::vector<uint8_t>& value) {
+    check_initialized();
 
     JNI::Env env;
     jbyteArray jbyteArray_obj = env->NewByteArray(value.size());
-    env->SetByteArrayRegion(jbyteArray_obj, 0, value.size(), reinterpret_cast<const jbyte *>(value.data()));
+    env->SetByteArrayRegion(jbyteArray_obj, 0, value.size(), reinterpret_cast<const jbyte*>(value.data()));
 
     bool result = _obj.call_boolean_method(_method_setValue, jbyteArray_obj);
 

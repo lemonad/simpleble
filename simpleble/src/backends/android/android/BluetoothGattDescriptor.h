@@ -1,13 +1,16 @@
 #pragma once
 
-#include <string>
 #include <simpleble/Types.h>
+#include <string>
 #include "jni/Common.hpp"
 
 namespace SimpleBLE {
 namespace Android {
 
+class ClassHandler;
+
 class BluetoothGattDescriptor {
+    // See: https://developer.android.com/reference/android/bluetooth/BluetoothGattDescriptor
   public:
     BluetoothGattDescriptor();
     BluetoothGattDescriptor(JNI::Object obj);
@@ -24,7 +27,6 @@ class BluetoothGattDescriptor {
     static const std::vector<uint8_t> ENABLE_NOTIFICATION_VALUE;
     static const std::vector<uint8_t> ENABLE_INDICATION_VALUE;
 
-
   private:
     JNI::Object _obj;
     static JNI::Class _cls;
@@ -32,7 +34,10 @@ class BluetoothGattDescriptor {
     static jmethodID _method_getValue;
     static jmethodID _method_setValue;
 
-    void initialize();
+    static void initialize();
+    void check_initialized() const;
+
+    friend class ClassHandler;
 };
 
 }  // namespace Android

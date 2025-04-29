@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include "external/kvn_bytearray.h"
+#include "kvn/kvn_bytearray.h"
 
 /**
  * @file Types.h

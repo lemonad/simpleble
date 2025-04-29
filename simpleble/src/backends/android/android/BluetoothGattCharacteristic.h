@@ -8,7 +8,10 @@
 namespace SimpleBLE {
 namespace Android {
 
+class ClassHandler;
+
 class BluetoothGattCharacteristic {
+    // See: https://developer.android.com/reference/android/bluetooth/BluetoothGattCharacteristic
   public:
     BluetoothGattCharacteristic();
     BluetoothGattCharacteristic(JNI::Object obj);
@@ -16,12 +19,14 @@ class BluetoothGattCharacteristic {
     //    bool addDescriptor(BluetoothGattDescriptor descriptor);
     //    BluetoothGattDescriptor getDescriptor(std::string uuid);
     std::vector<BluetoothGattDescriptor> getDescriptors();
+
     int getInstanceId();
     int getPermissions();
     int getProperties();
     std::string getUuid();
     int getWriteType();
     void setWriteType(int writeType);
+
     bool setValue(const std::vector<uint8_t>& value);
 
     JNI::Object getObject() const { return _obj; }
@@ -50,7 +55,10 @@ class BluetoothGattCharacteristic {
     static jmethodID _method_setWriteType;
     static jmethodID _method_setValue;
 
-    void initialize();
+    static void initialize();
+    void check_initialized() const;
+
+    friend class ClassHandler;
 };
 
 }  // namespace Android

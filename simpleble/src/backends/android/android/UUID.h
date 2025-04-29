@@ -3,23 +3,27 @@
 #include "jni/Common.hpp"
 
 namespace SimpleBLE {
-    namespace Android {
+namespace Android {
 
-        class UUID {
-    public:
-            UUID();
-            UUID(JNI::Object obj);
+class ClassHandler;
 
-            std::string toString();
+class UUID {
+  public:
+    static void initialize();
+    UUID();
+    UUID(JNI::Object obj);
 
-        private:
-            static JNI::Class _cls;
-            static jmethodID _method_toString;
+    std::string toString();
 
-            static void initialize();
+  private:
+    static JNI::Class _cls;
+    static jmethodID _method_toString;
 
-            JNI::Object _obj;
-        };
+    void check_initialized() const;
+    JNI::Object _obj;
 
-    } // Android
-} // SimpleBLE
+    friend class ClassHandler;
+};
+
+}  // namespace Android
+}  // namespace SimpleBLE

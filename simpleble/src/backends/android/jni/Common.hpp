@@ -1,12 +1,18 @@
 #pragma once
 
 #include <jni.h>
-#include <string>
-#include <vector>
+#include <condition_variable>
 #include <cstdint>
+#include <functional>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
+#include <vector>
 
 #include "GlobalRef.hpp"
 #include "VM.hpp"
+#include "kvn/kvn_bytearray.h"
 
 namespace SimpleBLE {
 namespace JNI {
@@ -20,16 +26,16 @@ class Object {
 
     Object(jobject obj) : _obj(obj) {
         JNIEnv* env = VM::env();
-        _cls = env->GetObjectClass(obj);
+        if (obj != nullptr) {
+            _cls = env->GetObjectClass(obj);
+        }
     }
 
     Object(jobject obj, jclass cls) : _obj(obj), _cls(cls) {}
 
     jobject get() const { return _obj.get(); }
 
-    explicit operator bool() const {
-        return _obj.get() != nullptr;
-    }
+    explicit operator bool() const { return _obj.get() != nullptr; }
 
     jmethodID get_method(const char* name, const char* signature) {
         JNIEnv* env = VM::env();
@@ -40,8 +46,7 @@ class Object {
     Object call_object_method(jmethodID method, Args&&... args) {
         JNIEnv* env = VM::env();
         jobject result = env->CallObjectMethod(_obj.get(), method, std::forward<Args>(args)...);
-        jclass resultClass = env->GetObjectClass(result);
-        return Object(result, resultClass);
+        return Object(result);
     }
 
     template <typename... Args>
@@ -67,7 +72,7 @@ class Object {
     template <typename... Args>
     std::string call_string_method(jmethodID method, Args&&... args) {
         JNIEnv* env = VM::env();
-        jstring jstr = (jstring)env->CallObjectMethod(_obj.get(), method, std::forward<Args>(args)...);
+        auto jstr = static_cast<jstring>(env->CallObjectMethod(_obj.get(), method, std::forward<Args>(args)...));
 
         if (jstr == nullptr) {
             return "";
@@ -79,10 +84,10 @@ class Object {
         return result;
     }
 
-    template<typename... Args>
+    template <typename... Args>
     std::vector<uint8_t> call_byte_array_method(jmethodID method, Args&&... args) {
         JNIEnv* env = VM::env();
-        jbyteArray jarr = (jbyteArray)env->CallObjectMethod(_obj.get(), method, std::forward<Args>(args)...);
+        auto jarr = static_cast<jbyteArray>(env->CallObjectMethod(_obj.get(), method, std::forward<Args>(args)...));
 
         if (jarr == nullptr) {
             return {};
@@ -96,8 +101,6 @@ class Object {
         env->ReleaseByteArrayElements(jarr, arr, JNI_ABORT);
         return result;
     }
-    
-
 
     template <typename... Args>
     Object call_object_method(const char* name, const char* signature, Args&&... args) {
@@ -106,9 +109,7 @@ class Object {
         jmethodID method = env->GetMethodID(_cls.get(), name, signature);
         jobject result = env->CallObjectMethod(_obj.get(), method, std::forward<Args>(args)...);
 
-        jclass resultClass = env->GetObjectClass(result);
-
-        return Object(result, resultClass);
+        return Object(result);
     }
 
     template <typename... Args>
@@ -144,7 +145,7 @@ class Object {
         JNIEnv* env = VM::env();
 
         jmethodID method = env->GetMethodID(_cls.get(), name, signature);
-        jstring jstr = (jstring)env->CallObjectMethod(_obj.get(), method, std::forward<Args>(args)...);
+        auto jstr = static_cast<jstring>(env->CallObjectMethod(_obj.get(), method, std::forward<Args>(args)...));
 
         if (jstr == nullptr) {
             return "";
@@ -156,12 +157,12 @@ class Object {
         return result;
     }
 
-    template<typename... Args>
+    template <typename... Args>
     std::vector<uint8_t> call_byte_array_method(const char* name, const char* signature, Args&&... args) {
         JNIEnv* env = VM::env();
 
         jmethodID method = env->GetMethodID(_cls.get(), name, signature);
-        jbyteArray jarr = (jbyteArray)env->CallObjectMethod(_obj.get(), method, std::forward<Args>(args)...);
+        auto jarr = static_cast<jbyteArray>(env->CallObjectMethod(_obj.get(), method, std::forward<Args>(args)...));
 
         if (jarr == nullptr) {
             return {};
@@ -181,6 +182,43 @@ class Object {
     GlobalRef<jclass> _cls;
 };
 
+class ByteArray : public Object {
+  public:
+    ByteArray(jbyteArray obj) : Object(obj) {}
+
+    ByteArray(const kvn::bytearray& data) : Object(nullptr) {
+        JNIEnv* env = VM::env();
+        jbyteArray jarr = env->NewByteArray(data.size());
+        env->SetByteArrayRegion(jarr, 0, data.size(), reinterpret_cast<const jbyte*>(data.data()));
+        *this = ByteArray(jarr);
+    }
+
+    ByteArray(const Object& obj) : Object(static_cast<jbyteArray>(obj.get())) {}
+
+    // Get the raw byte array data
+    kvn::bytearray bytes() {
+        JNIEnv* env = VM::env();
+        jbyteArray jarr = static_cast<jbyteArray>(get());
+
+        if (jarr == nullptr) {
+            return {};
+        }
+
+        jsize len = env->GetArrayLength(jarr);
+        kvn::bytearray result(len);
+
+        env->GetByteArrayRegion(jarr, 0, len, reinterpret_cast<jbyte*>(result.data()));
+
+        return result;
+    }
+
+    // Get the length of the byte array
+    size_t length() {
+        JNIEnv* env = VM::env();
+        return env->GetArrayLength(static_cast<jbyteArray>(get()));
+    }
+};
+
 class Class {
   public:
     Class() = default;
@@ -195,6 +233,13 @@ class Class {
         jmethodID method = env->GetStaticMethodID(_cls.get(), name, signature);
         jobject obj = env->CallStaticObjectMethod(_cls.get(), method, std::forward<Args>(args)...);
 
+        return Object(obj, _cls.get());
+    }
+
+    template <typename... Args>
+    Object call_static_method(jmethodID method, Args&&... args) {
+        JNIEnv* env = VM::env();
+        jobject obj = env->CallStaticObjectMethod(_cls.get(), method, std::forward<Args>(args)...);
         return Object(obj, _cls.get());
     }
 
@@ -218,7 +263,7 @@ class Class {
 };
 
 class Env {
-public:
+  public:
     Env() { _env = VM::env(); }
     virtual ~Env() = default;
     Env(Env& other) = delete;             // Remove the copy constructor
@@ -236,19 +281,80 @@ public:
         return cls;
     }
 
-private:
+  private:
     JNIEnv* _env = nullptr;
+};
+
+class Runner {
+  public:
+    // Delete copy constructor and assignment
+    Runner(const Runner&) = delete;
+    Runner& operator=(const Runner&) = delete;
+
+    static Runner& get() {
+        static Runner instance;
+        return instance;
+    }
+
+    virtual ~Runner() {
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            _stop = true;
+            _cv.notify_one();
+        }
+        _thread.join();
+    }
+
+    void enqueue(std::function<void()> func) {
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            _queue.push(std::move(func));
+            lock.unlock();
+            _cv.notify_one();
+        }
+    }
+
+  protected:
+    void thread_func() {
+        VM::attach();
+        while (true) {
+            std::function<void()> func;
+            {
+                std::unique_lock<std::mutex> lock(_mutex);
+                _cv.wait(lock, [this] { return _stop || !_queue.empty(); });
+                if (_stop && _queue.empty()) {
+                    break;
+                }
+                func = std::move(_queue.front());
+                _queue.pop();
+            }
+            func();
+        }
+        VM::detach();
+    }
+
+  private:
+    // Move constructor to private
+    Runner() : _stop(false) { _thread = std::thread(&Runner::thread_func, this); }
+
+    std::thread _thread;
+    std::mutex _mutex;
+    std::condition_variable _cv;
+    std::queue<std::function<void()>> _queue;
+    bool _stop;
 };
 
 // TODO: Move these to their own namespace
 
 struct JObjectComparator {
+    // TODO: Lazy initialize jclass and jmethodID objects.
+
     bool operator()(const jobject& lhs, const jobject& rhs) const {
         if (lhs == nullptr && rhs == nullptr) {
             return false;  // Both are null, considered equal
         }
         if (lhs == nullptr) {
-            return true;   // lhs is null, rhs is not null, lhs < rhs
+            return true;  // lhs is null, rhs is not null, lhs < rhs
         }
         if (rhs == nullptr) {
             return false;  // rhs is null, lhs is not null, lhs > rhs
@@ -278,16 +384,18 @@ struct JObjectComparator {
 };
 
 struct JniObjectComparator {
+    // TODO: Lazy initialize jclass and jmethodID objects.
+
     bool operator()(const Object& lhs, const Object& rhs) const {
         // Handle null object comparisons
         if (!lhs && !rhs) {
-            return false; // Both are null, considered equal
+            return false;  // Both are null, considered equal
         }
         if (!lhs) {
-            return true; // lhs is null, rhs is not, lhs < rhs
+            return true;  // lhs is null, rhs is not, lhs < rhs
         }
         if (!rhs) {
-            return false; // rhs is null, lhs is not, lhs > rhs
+            return false;  // rhs is null, lhs is not, lhs > rhs
         }
 
         JNIEnv* env = VM::env();
@@ -298,7 +406,7 @@ struct JniObjectComparator {
 
         // Check if both jobject handles refer to the same object
         if (env->IsSameObject(lhsObject, rhsObject)) {
-            return false; // Both objects are the same
+            return false;  // Both objects are the same
         }
 
         // Use hashCode method to establish a consistent ordering
@@ -309,11 +417,11 @@ struct JniObjectComparator {
         jint rhsHashCode = env->CallIntMethod(rhsObject, hashCodeMethod);
 
         if (lhsHashCode != rhsHashCode) {
-            return lhsHashCode < rhsHashCode; // Use hash code for initial comparison
+            return lhsHashCode < rhsHashCode;  // Use hash code for initial comparison
         }
 
         // Use a direct pointer comparison as a fallback for objects with identical hash codes
-        return lhsObject < rhsObject; // This comparison is consistent within the same execution
+        return lhsObject < rhsObject;  // This comparison is consistent within the same execution
     }
 };
 

@@ -9,7 +9,7 @@
 }
 
 // Private properties
-@property() SimpleBLE::AdapterBase* adapter;
+@property() SimpleBLE::AdapterMac* adapter;
 @property(strong) dispatch_queue_t centralManagerQueue;
 @property(strong) CBCentralManager* centralManager;
 
@@ -21,7 +21,7 @@
     return CBCentralManager.authorization == CBManagerAuthorizationAllowedAlways && _centralManager.state == CBManagerStatePoweredOn;
 }
 
-- (instancetype)init:(SimpleBLE::AdapterBase*)adapter {
+- (instancetype)init:(SimpleBLE::AdapterMac*)adapter {
     self = [super init];
     if (self) {
         _adapter = adapter;
@@ -43,6 +43,10 @@
 
 - (void*)underlying {
     return (__bridge void*)self.centralManager;
+}
+
+- (bool)isPowered {
+    return self.centralManager.state == CBManagerStatePoweredOn;
 }
 
 - (void)scanStart {
@@ -128,8 +132,8 @@
     NSDictionary* rawServiceDataDict = advertisementData[CBAdvertisementDataServiceDataKey];
     for (CBUUID* serviceUuid in rawServiceDataDict) {
         NSData* rawServiceData = rawServiceDataDict[serviceUuid];
-        const char* rawServiceDataBytes = (const char*) rawServiceData.bytes;
-        size_t rawServiceDataLength = (size_t) rawServiceData.length;
+        const char* rawServiceDataBytes = (const char*)rawServiceData.bytes;
+        size_t rawServiceDataLength = (size_t)rawServiceData.length;
         SimpleBLE::ByteArray serviceData = SimpleBLE::ByteArray(rawServiceDataBytes, rawServiceDataLength);
         advertisingData.service_data[uuidToSimpleBLE(serviceUuid)] = serviceData;
     }

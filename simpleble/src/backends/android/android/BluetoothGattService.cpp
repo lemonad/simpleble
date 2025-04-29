@@ -4,6 +4,7 @@
 
 #include "BluetoothGattService.h"
 #include "UUID.h"
+#include "jni/List.h"
 
 namespace SimpleBLE {
 namespace Android {
@@ -60,60 +61,68 @@ void BluetoothGattService::initialize() {
     }
 }
 
-BluetoothGattService::BluetoothGattService() { initialize(); }
-
-
-BluetoothGattService::BluetoothGattService(JNI::Object obj) : BluetoothGattService() {
-    _obj = obj;
+void BluetoothGattService::check_initialized() const {
+    if (!_obj) throw std::runtime_error("BluetoothGattService is not initialized");
 }
 
-//bool BluetoothGattService::addCharacteristic(BluetoothGattCharacteristic characteristic) {
-//    return _obj.call_boolean_method(_method_addCharacteristic, characteristic.getObject());
-//}
+BluetoothGattService::BluetoothGattService() {}
+
+BluetoothGattService::BluetoothGattService(JNI::Object obj) : _obj(obj) {}
+
+// bool BluetoothGattService::addCharacteristic(BluetoothGattCharacteristic characteristic) {
+//     return _obj.call_boolean_method(_method_addCharacteristic, characteristic.getObject());
+// }
 //
-//bool BluetoothGattService::addService(BluetoothGattService service) {
-//    return _obj.call_boolean_method(_method_addService, service.getObject());
-//}
+// bool BluetoothGattService::addService(BluetoothGattService service) {
+//     return _obj.call_boolean_method(_method_addService, service.getObject());
+// }
 //
-//BluetoothGattCharacteristic BluetoothGattService::getCharacteristic(std::string uuid) {
-//    JNI::Env env;
-//    JNI::Object charObj = _obj.call_object_method(_method_getCharacteristic, env->NewStringUTF(uuid.c_str()));
-//    return BluetoothGattCharacteristic(charObj);
-//}
+// BluetoothGattCharacteristic BluetoothGattService::getCharacteristic(std::string uuid) {
+//     JNI::Env env;
+//     JNI::Object charObj = _obj.call_object_method(_method_getCharacteristic, env->NewStringUTF(uuid.c_str()));
+//     return BluetoothGattCharacteristic(charObj);
+// }
 //
 std::vector<BluetoothGattCharacteristic> BluetoothGattService::getCharacteristics() {
-    if (!_obj) return std::vector<BluetoothGattCharacteristic>();
+    check_initialized();
 
-    JNI::Object characteristics = _obj.call_object_method(_method_getCharacteristics);
-    if (!characteristics) return std::vector<BluetoothGattCharacteristic>();
+    JNI::Object characteristics_obj = _obj.call_object_method(_method_getCharacteristics);
+    if (!characteristics_obj) throw std::runtime_error("Failed to get characteristics");
 
     std::vector<BluetoothGattCharacteristic> result;
-    JNI::Object iterator = characteristics.call_object_method("iterator", "()Ljava/util/Iterator;");
-    while (iterator.call_boolean_method("hasNext", "()Z")) {
-        JNI::Object characteristic = iterator.call_object_method("next", "()Ljava/lang/Object;");
+    JNI::Types::List list(characteristics_obj);
+    JNI::Types::Iterator iterator = list.iterator();
+    while (iterator.hasNext()) {
+        JNI::Object characteristic = iterator.next();
 
-        if (!characteristic) continue;
+        if (!characteristic) continue;  // TODO: Should we throw an error here?
         result.push_back(BluetoothGattCharacteristic(characteristic));
     }
 
     return result;
 }
 //
-//std::vector<BluetoothGattService> BluetoothGattService::getIncludedServices() {
+// std::vector<BluetoothGattService> BluetoothGattService::getIncludedServices() {
 //    JNI::Env env;
 //    JNI::Object listObj = _obj.call_object_method(_method_getIncludedServices);
 //    return JNI::convert_list<BluetoothGattService>(listObj);
 //}
 
-int BluetoothGattService::getInstanceId() { return _obj.call_int_method(_method_getInstanceId); }
+int BluetoothGattService::getInstanceId() {
+    check_initialized();
+    return _obj.call_int_method(_method_getInstanceId);
+}
 
-int BluetoothGattService::getType() { return _obj.call_int_method(_method_getType); }
+int BluetoothGattService::getType() {
+    check_initialized();
+    return _obj.call_int_method(_method_getType);
+}
 
 std::string BluetoothGattService::getUuid() {
-    if (!_obj) return "";
+    check_initialized();
 
     JNI::Object uuidObj = _obj.call_object_method(_method_getUuid);
-    if (!uuidObj) return "";
+    if (!uuidObj) throw std::runtime_error("Failed to get UUID");
 
     return UUID(uuidObj).toString();
 }

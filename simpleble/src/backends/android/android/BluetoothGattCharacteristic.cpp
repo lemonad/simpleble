@@ -4,8 +4,8 @@
 
 #include "BluetoothGattCharacteristic.h"
 #include "UUID.h"
+#include "jni/List.h"
 #include "jni/Types.h"
-
 namespace SimpleBLE {
 namespace Android {
 
@@ -76,11 +76,13 @@ void BluetoothGattCharacteristic::initialize() {
     }
 }
 
-BluetoothGattCharacteristic::BluetoothGattCharacteristic() { initialize(); }
-
-BluetoothGattCharacteristic::BluetoothGattCharacteristic(JNI::Object obj) : BluetoothGattCharacteristic() {
-    _obj = obj;
+void BluetoothGattCharacteristic::check_initialized() const {
+    if (!_obj) throw std::runtime_error("BluetoothGattCharacteristic is not initialized");
 }
+
+BluetoothGattCharacteristic::BluetoothGattCharacteristic() {}
+
+BluetoothGattCharacteristic::BluetoothGattCharacteristic(JNI::Object obj) : _obj(obj) {}
 
 // bool BluetoothGattCharacteristic::addDescriptor(BluetoothGattDescriptor descriptor) {
 //     return _obj.call_boolean_method(_method_addDescriptor, descriptor.getObject());
@@ -93,15 +95,16 @@ BluetoothGattCharacteristic::BluetoothGattCharacteristic(JNI::Object obj) : Blue
 // }
 //
 std::vector<BluetoothGattDescriptor> BluetoothGattCharacteristic::getDescriptors() {
-    if (!_obj) return std::vector<BluetoothGattDescriptor>();
+    check_initialized();
 
-    JNI::Object descriptors = _obj.call_object_method(_method_getDescriptors);
-    if (!descriptors) return std::vector<BluetoothGattDescriptor>();
+    JNI::Object descriptors_obj = _obj.call_object_method(_method_getDescriptors);
+    if (!descriptors_obj) throw std::runtime_error("Failed to get descriptors");
 
     std::vector<BluetoothGattDescriptor> result;
-    JNI::Object iterator = descriptors.call_object_method("iterator", "()Ljava/util/Iterator;");
-    while (iterator.call_boolean_method("hasNext", "()Z")) {
-        JNI::Object descriptor = iterator.call_object_method("next", "()Ljava/lang/Object;");
+    JNI::Types::List list(descriptors_obj);
+    JNI::Types::Iterator iterator = list.iterator();
+    while (iterator.hasNext()) {
+        JNI::Object descriptor = iterator.next();
 
         if (!descriptor) continue;
         result.push_back(BluetoothGattDescriptor(descriptor));
@@ -110,28 +113,43 @@ std::vector<BluetoothGattDescriptor> BluetoothGattCharacteristic::getDescriptors
     return result;
 }
 
-int BluetoothGattCharacteristic::getInstanceId() { return _obj.call_int_method(_method_getInstanceId); }
+int BluetoothGattCharacteristic::getInstanceId() {
+    check_initialized();
+    return _obj.call_int_method(_method_getInstanceId);
+}
 
-int BluetoothGattCharacteristic::getPermissions() { return _obj.call_int_method(_method_getPermissions); }
+int BluetoothGattCharacteristic::getPermissions() {
+    check_initialized();
+    return _obj.call_int_method(_method_getPermissions);
+}
 
-int BluetoothGattCharacteristic::getProperties() { return _obj.call_int_method(_method_getProperties); }
+int BluetoothGattCharacteristic::getProperties() {
+    check_initialized();
+    return _obj.call_int_method(_method_getProperties);
+}
 
 std::string BluetoothGattCharacteristic::getUuid() {
-    if (!_obj) return "";
+    check_initialized();
 
     JNI::Object uuidObj = _obj.call_object_method(_method_getUuid);
-    if (!uuidObj) return "";
+    if (!uuidObj) throw std::runtime_error("Failed to get UUID");
 
     return UUID(uuidObj).toString();
 }
 
-int BluetoothGattCharacteristic::getWriteType() { return _obj.call_int_method(_method_getWriteType); }
+int BluetoothGattCharacteristic::getWriteType() {
+    check_initialized();
+    return _obj.call_int_method(_method_getWriteType);
+}
 
 void BluetoothGattCharacteristic::setWriteType(int writeType) {
+    check_initialized();
     _obj.call_void_method(_method_setWriteType, writeType);
 }
 
 bool BluetoothGattCharacteristic::setValue(const std::vector<uint8_t>& value) {
+    check_initialized();
+
     JNI::Env env;
     jbyteArray array = JNI::Types::toJByteArray(value);
 

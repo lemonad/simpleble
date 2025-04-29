@@ -4,7 +4,7 @@
 #import <Foundation/Foundation.h>
 
 #include <functional>
-#include "AdapterBase.h"
+#import "AdapterMac.h"
 
 @interface AdapterBaseMacOS : NSObject<CBCentralManagerDelegate>
 
@@ -12,14 +12,14 @@
 
 - (bool)isBluetoothEnabled;
 
-- (instancetype)init:(SimpleBLE::AdapterBase*)adapter;
+- (instancetype)init:(SimpleBLE::AdapterMac*)adapter;
 
 - (void*)underlying;
 
+- (bool)isPowered;
+
 - (void)scanStart;
-
 - (void)scanStop;
-
 - (bool)scanIsActive;
 
 - (NSString*)address;

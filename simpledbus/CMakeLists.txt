@@ -18,19 +18,12 @@ project(
 # Run prelude script to set up environment
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/epilogue.cmake)
 
-option(LIBFMT_VENDORIZE "Enable vendorized libfmt" ON)
-
-find_package(fmt REQUIRED)
-set_target_properties(fmt PROPERTIES EXCLUDE_FROM_ALL TRUE)
-
 find_package(DBus1 REQUIRED)
 
 # Load all variables that would eventually need to be exposed to downstream projects
 if(NOT SIMPLEDBUS_LOG_LEVEL)
     set(SIMPLEDBUS_LOG_LEVEL "FATAL")
 endif()
-
-set(SIMPLEDBUS_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(SIMPLEDBUS_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/advanced/Interface.cpp
@@ -64,11 +57,15 @@ set_target_properties(
 list(APPEND PRIVATE_COMPILE_DEFINITIONS SIMPLEDBUS_LOG_LEVEL=${SIMPLEDBUS_LOG_LEVEL})
 
 target_link_libraries(simpledbus PUBLIC ${DBus1_LIBRARIES})
-target_link_libraries(simpledbus PRIVATE $<BUILD_INTERFACE:fmt::fmt-header-only>)
+
+target_compile_definitions(simpledbus PRIVATE FMT_HEADER_ONLY)
 
 target_include_directories(simpledbus PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(simpledbus PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/external)
+target_include_directories(simpledbus PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/internal)
 target_include_directories(simpledbus INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/external>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     $<INSTALL_INTERFACE:${DBus1_INCLUDE_DIR}>
     $<INSTALL_INTERFACE:${DBus1_ARCH_INCLUDE_DIR}>)
@@ -101,6 +98,12 @@ install(
 install(
     DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/simpledbus/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/simpledbus)
+
+install(
+    FILES
+        ${CMAKE_CURRENT_LIST_DIR}/../dependencies/external/kvn/kvn_safe_callback.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/../dependencies/external/kvn/logfwd.hpp
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/simpledbus/kvn)
 
 install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/simpledbus.pc

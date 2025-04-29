@@ -3,6 +3,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <kvn_safe_callback.hpp>
+#include <kvn_safe_map.hpp>
 #include <map>
 #include <mutex>
 #include "jni/Common.hpp"
@@ -10,6 +11,8 @@
 namespace SimpleBLE {
 namespace Android {
 namespace Bridge {
+
+class ClassHandler;
 
 class BluetoothGattCallback {
   public:
@@ -46,48 +49,52 @@ class BluetoothGattCallback {
 
     // Not for public use
     // clang-format off
-    static void jni_onConnectionStateChangeCallback(JNIEnv *env, jobject thiz, jobject gatt, jint status, jint new_state);
-    static void jni_onServicesDiscoveredCallback(JNIEnv *env, jobject thiz, jobject gatt, jint status);
-    static void jni_onServiceChangedCallback(JNIEnv *env, jobject thiz, jobject gatt);
+    static void jni_onConnectionStateChangeCallback(JNI::Object thiz_obj, jint status, jint new_state);
+    static void jni_onServicesDiscoveredCallback(JNI::Object thiz_obj, jint status);
+    static void jni_onServiceChangedCallback(JNI::Object thiz_obj);
 
-    static void jni_onCharacteristicChangedCallback(JNIEnv *env, jobject thiz, jobject gatt, jobject characteristic, jbyteArray value);
-    static void jni_onCharacteristicReadCallback(JNIEnv *env, jobject thiz, jobject gatt, jobject characteristic, jbyteArray value, jint status);
-    static void jni_onCharacteristicWriteCallback(JNIEnv *env, jobject thiz, jobject gatt, jobject characteristic, jint status);
+    static void jni_onCharacteristicChangedCallback(JNI::Object thiz_obj, JNI::Object characteristic_obj, JNI::ByteArray value);
+    static void jni_onCharacteristicReadCallback(JNI::Object thiz_obj, JNI::Object characteristic_obj, JNI::ByteArray value, jint status);
+    static void jni_onCharacteristicWriteCallback(JNI::Object thiz_obj, JNI::Object characteristic_obj, jint status);
 
-    static void jni_onDescriptorReadCallback(JNIEnv *env, jobject thiz, jobject gatt, jobject descriptor, jbyteArray value, jint status);
-    static void jni_onDescriptorWriteCallback(JNIEnv *env, jobject thiz, jobject gatt, jobject descriptor, jint status);
+    static void jni_onDescriptorReadCallback(JNI::Object thiz_obj, JNI::Object descriptor_obj, JNI::ByteArray value, jint status);
+    static void jni_onDescriptorWriteCallback(JNI::Object thiz_obj, JNI::Object descriptor_obj, jint status);
 
-    static void jni_onMtuChangedCallback(JNIEnv *env, jobject thiz, jobject gatt, jint mtu, jint status);
-    static void jni_onPhyReadCallback(JNIEnv *env, jobject thiz, jobject gatt, jint txPhy, jint rxPhy, jint status);
-    static void jni_onPhyUpdateCallback(JNIEnv *env, jobject thiz, jobject gatt, jint txPhy, jint rxPhy, jint status);
-    static void jni_onReadRemoteRssiCallback(JNIEnv *env, jobject thiz, jobject gatt, jint rssi, jint status);
-    static void jni_onReliableWriteCompletedCallback(JNIEnv *env, jobject thiz, jobject gatt, jint status);
+    static void jni_onMtuChangedCallback(JNI::Object thiz_obj, jint mtu, jint status);
+    static void jni_onPhyReadCallback(JNI::Object thiz_obj, jint txPhy, jint rxPhy, jint status);
+    static void jni_onPhyUpdateCallback(JNI::Object thiz_obj, jint txPhy, jint rxPhy, jint status);
+    static void jni_onReadRemoteRssiCallback(JNI::Object thiz_obj, jint rssi, jint status);
+    static void jni_onReliableWriteCompletedCallback(JNI::Object thiz_obj, jint status);
     // clang-format on
 
   private:
     struct FlagData {
-        bool flag;
+        bool flag = false;
         std::condition_variable cv;
         std::mutex mtx;
         std::vector<uint8_t> value;
     };
 
-    static JNI::Class _cls;
-    static std::map<jobject, BluetoothGattCallback*, JNI::JObjectComparator> _map;
     static void initialize();
+
+    static JNI::Class _cls;
+
+    static kvn::safe_map<JNI::Object, BluetoothGattCallback*, JNI::JniObjectComparator> _map;
 
     JNI::Object _obj;
 
     kvn::safe_callback<void(bool)> _callback_onConnectionStateChange;
     kvn::safe_callback<void()> _callback_onServicesDiscovered;
 
-    std::map<JNI::Object, kvn::safe_callback<void(std::vector<uint8_t>)>, JNI::JniObjectComparator>
+    kvn::safe_map<JNI::Object, kvn::safe_callback<void(std::vector<uint8_t>)>, JNI::JniObjectComparator>
         _callback_onCharacteristicChanged;
 
-    std::map<JNI::Object, FlagData, JNI::JniObjectComparator> _flag_characteristicWritePending;
-    std::map<JNI::Object, FlagData, JNI::JniObjectComparator> _flag_characteristicReadPending;
-    std::map<JNI::Object, FlagData, JNI::JniObjectComparator> _flag_descriptorWritePending;
-    std::map<JNI::Object, FlagData, JNI::JniObjectComparator> _flag_descriptorReadPending;
+    kvn::safe_map<JNI::Object, FlagData, JNI::JniObjectComparator> _flag_characteristicWritePending;
+    kvn::safe_map<JNI::Object, FlagData, JNI::JniObjectComparator> _flag_characteristicReadPending;
+    kvn::safe_map<JNI::Object, FlagData, JNI::JniObjectComparator> _flag_descriptorWritePending;
+    kvn::safe_map<JNI::Object, FlagData, JNI::JniObjectComparator> _flag_descriptorReadPending;
+
+    friend class ClassHandler;
 };
 
 }  // namespace Bridge
