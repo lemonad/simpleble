@@ -1,5 +1,7 @@
 #include <simpleble/Adapter.h>
 
+#include <utility>
+
 #include "AdapterBase.h"
 #include "AdapterBuilder.h"
 #include "LoggingInternal.h"
@@ -108,3 +110,29 @@ void Adapter::set_callback_on_scan_found(std::function<void(Peripheral)> on_scan
 
     internal_->set_callback_on_scan_found(std::move(on_scan_found));
 }
+
+void Adapter::create_service(const ServiceData& service_data) {
+    if (!initialized()) throw Exception::NotInitialized();
+
+    internal_->create_service(std::move(service_data));
+}
+
+void Adapter::create_advertisement(const AdvertisementData& advertisement_data) {
+    if (!initialized()) throw Exception::NotInitialized();
+
+    internal_->create_advertisement(std::move(advertisement_data));
+}
+
+void Adapter::start_advertisement() {
+    if (!initialized()) throw Exception::NotInitialized();
+
+    internal_->start_advertisement();
+}
+
+void Adapter::stop_advertisement() {
+    if (!initialized()) throw Exception::NotInitialized();
+
+    internal_->stop_advertisement();
+}
+
+

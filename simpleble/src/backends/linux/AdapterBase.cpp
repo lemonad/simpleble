@@ -31,7 +31,17 @@ bool AdapterBase::bluetooth_enabled() {
 
 AdapterBase::AdapterBase(std::shared_ptr<SimpleBluez::Adapter> adapter) : adapter_(adapter) {}
 
-AdapterBase::~AdapterBase() { adapter_->clear_on_device_updated(); }
+AdapterBase::~AdapterBase() {
+    adapter_->clear_on_device_updated();
+
+    if (custom_advertisement_) {
+        adapter_->unregister_advertisement(custom_advertisement_);
+    }
+
+    if (custom_service_manager_) {
+        adapter_->unregister_application(custom_service_manager_->path());
+    }
+}
 
 void* AdapterBase::underlying() const { return adapter_.get(); }
 
@@ -148,3 +158,56 @@ void AdapterBase::set_callback_on_scan_found(std::function<void(Peripheral)> on_
         callback_on_scan_found_.unload();
     }
 }
+
+void AdapterBase::create_service(const ServiceData& service_data) {
+    custom_service_manager_ = Bluez::get()->bluez->get_custom_service_manager();
+    custom_advertisement_manager_ = Bluez::get()->bluez->get_custom_advertisement_manager();
+
+    auto service0 = custom_service_manager_->create_service();
+    service0->uuid(service_data.uuid);
+    service0->primary(true);
+
+    for (const auto& characteristic_data : service_data.characteristics) {
+        auto characteristic = service0->create_characteristic();
+        characteristic->uuid(characteristic_data.uuid);
+        characteristic->flags(characteristic_data.flags);
+        if (characteristic_data.write_callback) {
+            characteristic->set_on_write_value(characteristic_data.write_callback);
+        }
+    }
+
+    // Register the services and characteristics
+    adapter_->register_application(custom_service_manager_->path());
+
+    // NOTE: This long delay is not necessary. However, once an application is
+    // registered you want to wait until all services have been added to the adapter.
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+}
+
+void AdapterBase::create_advertisement(const AdvertisementData& advertisement_data) {
+    if (!custom_advertisement_manager_) {
+        throw std::runtime_error("Custom advertisement manager not created");
+    }
+
+    custom_advertisement_ = custom_advertisement_manager_->create_advertisement(advertisement_data.path);
+    custom_advertisement_->timeout(0);
+    custom_advertisement_->discoverable(true);
+    custom_advertisement_->local_name(advertisement_data.name);
+}
+
+void AdapterBase::start_advertisement() {
+    if (!custom_advertisement_) {
+        throw std::runtime_error("Custom advertisement not created");
+    }
+
+    adapter_->register_advertisement(custom_advertisement_);
+}
+
+void AdapterBase::stop_advertisement() {
+    if (!custom_advertisement_) {
+        throw std::runtime_error("Custom advertisement not created");
+    }
+
+    adapter_->unregister_advertisement(custom_advertisement_);
+}
+

@@ -32,6 +32,11 @@ class SIMPLEBLE_EXPORT Adapter {
     bool scan_is_active();
     std::vector<Peripheral> scan_get_results();
 
+    void create_service(const ServiceData& service_data);
+    void create_advertisement(const AdvertisementData& advertisement_data);
+    void start_advertisement();
+    void stop_advertisement();
+
     void set_callback_on_scan_start(std::function<void()> on_scan_start);
     void set_callback_on_scan_stop(std::function<void()> on_scan_stop);
     void set_callback_on_scan_updated(std::function<void(Peripheral)> on_scan_updated);

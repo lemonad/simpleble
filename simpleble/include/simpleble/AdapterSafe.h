@@ -23,6 +23,11 @@ class SIMPLEBLE_EXPORT Adapter : public SimpleBLE::Adapter {
     std::optional<bool> scan_is_active() noexcept;
     std::optional<std::vector<SimpleBLE::Safe::Peripheral>> scan_get_results() noexcept;
 
+    bool create_service(const ServiceData& service_data);
+    bool create_advertisement(const AdvertisementData& advertisement_data);
+    bool start_advertisement();
+    bool stop_advertisement();
+
     bool set_callback_on_scan_start(std::function<void()> on_scan_start) noexcept;
     bool set_callback_on_scan_stop(std::function<void()> on_scan_stop) noexcept;
     bool set_callback_on_scan_updated(std::function<void(SimpleBLE::Safe::Peripheral)> on_scan_updated) noexcept;

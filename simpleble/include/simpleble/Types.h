@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <functional>
 #include "external/kvn_bytearray.h"
 
 /**
@@ -32,5 +33,21 @@ enum class OperatingSystem {
 
 // TODO: Add to_string functions for all enums.
 enum BluetoothAddressType : int32_t { PUBLIC = 0, RANDOM = 1, UNSPECIFIED = 2 };
+
+struct CharacteristicData {
+    BluetoothUUID uuid;
+    std::vector<std::string> flags;
+    std::function<void(ByteArray value)> write_callback;
+};
+
+struct ServiceData {
+    BluetoothUUID uuid;
+    std::vector<CharacteristicData> characteristics;
+};
+
+struct AdvertisementData {
+    std::string name;
+    std::string path;
+};
 
 }  // namespace SimpleBLE

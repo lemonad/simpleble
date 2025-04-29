@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
+set(BUILD_SHARED_LIBS FALSE)
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/prelude.cmake)
 
 project(
@@ -206,6 +208,16 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/interfaces/Device1.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/interfaces/Battery1.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/interfaces/AgentManager1.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/CustomAdvertisement.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/CustomAdvertisementManager.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/CustomServiceManager.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/CustomRoot.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/CustomService.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/CustomCharacteristic.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/CustomDescriptor.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/interfaces/GattManager1.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/interfaces/LEAdvertisingManager1.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/interfaces/LEAdvertisement1.cpp
     )
 
     target_sources(simpleble PRIVATE

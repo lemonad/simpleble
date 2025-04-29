@@ -3,6 +3,8 @@
 #include <simpleble/Exceptions.h>
 #include <simpleble/Peripheral.h>
 #include <simpleble/Types.h>
+#include <simplebluez/CustomServiceManager.h>
+#include <simplebluez/CustomAdvertisementManager.h>
 
 #include <kvn_safe_callback.hpp>
 
@@ -33,6 +35,11 @@ class AdapterBase {
     bool scan_is_active();
     std::vector<Peripheral> scan_get_results();
 
+    void create_service(const ServiceData& service_data);
+    void create_advertisement(const AdvertisementData& advertisement_data);
+    void start_advertisement();
+    void stop_advertisement();
+
     void set_callback_on_scan_start(std::function<void()> on_scan_start);
     void set_callback_on_scan_stop(std::function<void()> on_scan_stop);
     void set_callback_on_scan_updated(std::function<void(Peripheral)> on_scan_updated);
@@ -45,6 +52,9 @@ class AdapterBase {
 
   private:
     std::shared_ptr<SimpleBluez::Adapter> adapter_;
+    std::shared_ptr<SimpleBluez::CustomServiceManager> custom_service_manager_;
+    std::shared_ptr<SimpleBluez::CustomAdvertisementManager> custom_advertisement_manager_;
+    std::shared_ptr<SimpleBluez::CustomAdvertisement> custom_advertisement_;
 
     std::atomic_bool is_scanning_;
 

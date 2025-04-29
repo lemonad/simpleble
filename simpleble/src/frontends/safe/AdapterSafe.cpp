@@ -141,3 +141,41 @@ std::optional<std::vector<SimpleBLE::Safe::Adapter>> SimpleBLE::Safe::Adapter::g
         return std::nullopt;
     }
 }
+
+bool SimpleBLE::Safe::Adapter::create_advertisement(const AdvertisementData& advertisement_data) {
+    try {
+        SimpleBLE::Adapter::create_advertisement(advertisement_data);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool SimpleBLE::Safe::Adapter::create_service(const ServiceData& service_data) {
+    try {
+        SimpleBLE::Adapter::create_service(service_data);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool SimpleBLE::Safe::Adapter::start_advertisement() {
+    try {
+        SimpleBLE::Adapter::start_advertisement();
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool SimpleBLE::Safe::Adapter::stop_advertisement() {
+    try {
+        SimpleBLE::Adapter::stop_advertisement();
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+
