@@ -67,6 +67,7 @@ class SIMPLEBLE_EXPORT Adapter {
     void create_advertisement(const AdvertisementData& advertisement_data);
     void start_advertisement();
     void stop_advertisement();
+    void run_once();
 
     void set_callback_on_scan_start(std::function<void()> on_scan_start);
     void set_callback_on_scan_stop(std::function<void()> on_scan_stop);

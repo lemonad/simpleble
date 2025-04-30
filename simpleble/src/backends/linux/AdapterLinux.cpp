@@ -7,6 +7,7 @@
 #include "BuilderBase.h"
 #include "CommonUtils.h"
 #include "PeripheralLinux.h"
+#include "BackendBluez.h"
 
 using namespace SimpleBLE;
 
@@ -14,7 +15,16 @@ bool AdapterLinux::bluetooth_enabled() { return adapter_->powered(); }
 
 AdapterLinux::AdapterLinux(std::shared_ptr<SimpleBluez::Adapter> adapter) : adapter_(adapter) {}
 
-AdapterLinux::~AdapterLinux() { adapter_->clear_on_device_updated(); }
+AdapterLinux::~AdapterLinux() {
+    adapter_->clear_on_device_updated();
+
+    if (custom_advertisement_) {
+        adapter_->unregister_advertisement(custom_advertisement_);
+    }
+
+    if (custom_service_manager_) {
+        adapter_->unregister_application(custom_service_manager_->path());
+    } }
 
 void* AdapterLinux::underlying() const { return adapter_.get(); }
 
@@ -61,10 +71,12 @@ void AdapterLinux::scan_start() {
         }
     });
 
+    SimpleBluez::Adapter1::DiscoveryFilter filter;
+    filter.Transport = SimpleBluez::Adapter::DiscoveryFilter::TransportType::LE;
+    adapter_->discovery_filter(filter);
+
     // Start scanning and notify the user.
     adapter_->discovery_start();
-
-    // TODO: Does a discovery filter need to be set?
 
     SAFE_CALLBACK_CALL(this->_callback_on_scan_start);
     is_scanning_ = true;
@@ -100,3 +112,60 @@ SharedPtrVector<PeripheralBase> AdapterLinux::get_paired_peripherals() {
 
     return peripherals;
 }
+
+void AdapterLinux::create_service(const ServiceData& service_data) {
+    custom_service_manager_ = BackendBluez::get()->bluez->get_custom_service_manager();
+    custom_advertisement_manager_ = BackendBluez::get()->bluez->get_custom_advertisement_manager();
+
+    auto service0 = custom_service_manager_->create_service();
+    service0->uuid(service_data.uuid);
+    service0->primary(true);
+
+    for (const auto& characteristic_data : service_data.characteristics) {
+        auto characteristic = service0->create_characteristic();
+        characteristic->uuid(characteristic_data.uuid);
+        characteristic->flags(characteristic_data.flags);
+        if (characteristic_data.write_callback) {
+            characteristic->set_on_write_value(characteristic_data.write_callback);
+        }
+    }
+
+    // Register the services and characteristics
+    adapter_->register_application(custom_service_manager_->path());
+
+    // NOTE: This long delay is not necessary. However, once an application is
+    // registered you want to wait until all services have been added to the adapter.
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+}
+
+void AdapterLinux::create_advertisement(const AdvertisementData& advertisement_data) {
+    if (!custom_advertisement_manager_) {
+        throw std::runtime_error("Custom advertisement manager not created");
+    }
+
+    custom_advertisement_ = custom_advertisement_manager_->create_advertisement(advertisement_data.path);
+    custom_advertisement_->timeout(0);
+    custom_advertisement_->discoverable(true);
+    custom_advertisement_->local_name(advertisement_data.name);
+}
+
+void AdapterLinux::start_advertisement() {
+    if (!custom_advertisement_) {
+        throw std::runtime_error("Custom advertisement not created");
+    }
+
+    adapter_->register_advertisement(custom_advertisement_);
+}
+
+void AdapterLinux::stop_advertisement() {
+    if (!custom_advertisement_) {
+        throw std::runtime_error("Custom advertisement not created");
+    }
+
+    adapter_->unregister_advertisement(custom_advertisement_);
+}
+
+void AdapterLinux::run_once() {
+    BackendBluez::get()->run_once();
+}
+

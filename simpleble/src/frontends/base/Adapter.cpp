@@ -134,4 +134,11 @@ void Adapter::stop_advertisement() {
     internal_->stop_advertisement();
 }
 
+void Adapter::run_once() {
+    if (!initialized()) throw Exception::NotInitialized();
+
+    internal_->run_once();
+}
+
+
 

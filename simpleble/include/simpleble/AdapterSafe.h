@@ -38,6 +38,7 @@ class SIMPLEBLE_EXPORT Adapter {
     bool create_advertisement(const AdvertisementData& advertisement_data);
     bool start_advertisement();
     bool stop_advertisement();
+    bool run_once();
 
     bool set_callback_on_scan_start(std::function<void()> on_scan_start) noexcept;
     bool set_callback_on_scan_stop(std::function<void()> on_scan_stop) noexcept;

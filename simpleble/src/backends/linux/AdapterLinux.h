@@ -8,6 +8,8 @@
 #include <kvn_safe_callback.hpp>
 
 #include <simplebluez/Adapter.h>
+#include <simplebluez/CustomServiceManager.h>
+#include <simplebluez/CustomAdvertisementManager.h>
 
 #include <atomic>
 #include <functional>
@@ -43,8 +45,17 @@ class AdapterLinux : public SimpleBLE::AdapterBase {
 
     virtual bool bluetooth_enabled() override;
 
+    virtual void create_service(const ServiceData& service_data) override;
+    virtual void create_advertisement(const AdvertisementData& advertisement_data) override;
+    virtual void start_advertisement() override;
+    virtual void stop_advertisement() override;
+    virtual void run_once() override;
+
   private:
     std::shared_ptr<SimpleBluez::Adapter> adapter_;
+    std::shared_ptr<SimpleBluez::CustomServiceManager> custom_service_manager_;
+    std::shared_ptr<SimpleBluez::CustomAdvertisementManager> custom_advertisement_manager_;
+    std::shared_ptr<SimpleBluez::CustomAdvertisement> custom_advertisement_;
 
     std::atomic_bool is_scanning_;
 

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
+set(BUILD_SHARED_LIBS FALSE)
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/prelude.cmake)
 
 project(
@@ -168,13 +170,14 @@ elseif(SIMPLEBLE_BACKEND_LINUX)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/backends/linux/PeripheralLinux.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/backends/linux/BackendBluez.cpp
 
-        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/ProxyOrg.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/BluezRoot.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/BluezOrg.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/Logging.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/Agent.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/Device.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/Characteristic.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/Exceptions.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/ProxyOrgBluez.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/BluezOrgBluez.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/Service.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/Adapter.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../simplebluez/src/Bluez.cpp

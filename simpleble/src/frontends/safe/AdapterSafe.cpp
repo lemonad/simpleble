@@ -159,7 +159,7 @@ std::optional<std::vector<SAdapter>> SAdapter::get_adapters() noexcept {
 
 bool SimpleBLE::Safe::Adapter::create_advertisement(const AdvertisementData& advertisement_data) {
     try {
-        SimpleBLE::Adapter::create_advertisement(advertisement_data);
+        internal_.create_advertisement(advertisement_data);
         return true;
     } catch (...) {
         return false;
@@ -168,7 +168,7 @@ bool SimpleBLE::Safe::Adapter::create_advertisement(const AdvertisementData& adv
 
 bool SimpleBLE::Safe::Adapter::create_service(const ServiceData& service_data) {
     try {
-        SimpleBLE::Adapter::create_service(service_data);
+        internal_.create_service(service_data);
         return true;
     } catch (...) {
         return false;
@@ -177,7 +177,7 @@ bool SimpleBLE::Safe::Adapter::create_service(const ServiceData& service_data) {
 
 bool SimpleBLE::Safe::Adapter::start_advertisement() {
     try {
-        SimpleBLE::Adapter::start_advertisement();
+        internal_.start_advertisement();
         return true;
     } catch (...) {
         return false;
@@ -186,11 +186,21 @@ bool SimpleBLE::Safe::Adapter::start_advertisement() {
 
 bool SimpleBLE::Safe::Adapter::stop_advertisement() {
     try {
-        SimpleBLE::Adapter::stop_advertisement();
+        internal_.stop_advertisement();
         return true;
     } catch (...) {
         return false;
     }
 }
+
+bool Safe::Adapter::run_once() {
+    try {
+        internal_.run_once();
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
 
 

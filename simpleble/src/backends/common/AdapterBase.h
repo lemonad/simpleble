@@ -55,6 +55,12 @@ class AdapterBase {
     virtual void set_callback_on_scan_updated(std::function<void(Peripheral)> on_scan_updated);
     virtual void set_callback_on_scan_found(std::function<void(Peripheral)> on_scan_found);
 
+    virtual void create_service(const ServiceData& service_data) = 0;
+    virtual void create_advertisement(const AdvertisementData& advertisement_data) = 0;
+    virtual void start_advertisement() = 0;
+    virtual void stop_advertisement() = 0;
+    virtual void run_once() = 0;
+
     virtual std::vector<std::shared_ptr<PeripheralBase>> get_paired_peripherals() = 0;
     virtual std::vector<std::shared_ptr<PeripheralBase>> get_connected_peripherals() { return {}; };
 
