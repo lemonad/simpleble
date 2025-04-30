@@ -44,6 +44,7 @@ class SIMPLEBLE_EXPORT Adapter {
     bool set_callback_on_scan_stop(std::function<void()> on_scan_stop) noexcept;
     bool set_callback_on_scan_updated(std::function<void(SimpleBLE::Safe::Peripheral)> on_scan_updated) noexcept;
     bool set_callback_on_scan_found(std::function<void(SimpleBLE::Safe::Peripheral)> on_scan_found) noexcept;
+    bool notify_characteristic(const std::string& characteristic_uuid, const ByteArray& value) noexcept;
 
     std::optional<std::vector<SimpleBLE::Safe::Peripheral>> get_paired_peripherals() noexcept;
 

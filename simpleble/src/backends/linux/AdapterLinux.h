@@ -50,12 +50,14 @@ class AdapterLinux : public SimpleBLE::AdapterBase {
     virtual void start_advertisement() override;
     virtual void stop_advertisement() override;
     virtual void run_once() override;
+    virtual void notify_characteristic(const std::string& characteristic_uuid, const ByteArray& value) override;
 
   private:
     std::shared_ptr<SimpleBluez::Adapter> adapter_;
     std::shared_ptr<SimpleBluez::CustomServiceManager> custom_service_manager_;
     std::shared_ptr<SimpleBluez::CustomAdvertisementManager> custom_advertisement_manager_;
     std::shared_ptr<SimpleBluez::CustomAdvertisement> custom_advertisement_;
+    std::vector<std::shared_ptr<SimpleBluez::CustomCharacteristic>> custom_characteristics_;
 
     std::atomic_bool is_scanning_;
 

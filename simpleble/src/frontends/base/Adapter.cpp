@@ -140,5 +140,11 @@ void Adapter::run_once() {
     internal_->run_once();
 }
 
+void Adapter::notify_characteristic(const std::string& characteristic_uuid, const ByteArray& value) {
+    if (!initialized()) throw Exception::NotInitialized();
+
+    internal_->notify_characteristic(characteristic_uuid, value);
+}
+
 
 

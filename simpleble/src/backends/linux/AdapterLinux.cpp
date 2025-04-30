@@ -128,6 +128,7 @@ void AdapterLinux::create_service(const ServiceData& service_data) {
         if (characteristic_data.write_callback) {
             characteristic->set_on_write_value(characteristic_data.write_callback);
         }
+        custom_characteristics_.push_back(characteristic);
     }
 
     // Register the services and characteristics
@@ -136,6 +137,17 @@ void AdapterLinux::create_service(const ServiceData& service_data) {
     // NOTE: This long delay is not necessary. However, once an application is
     // registered you want to wait until all services have been added to the adapter.
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+}
+
+void AdapterLinux::notify_characteristic(const std::string& characteristic_uuid, const ByteArray& value) {
+    for (const auto& characteristic : custom_characteristics_) {
+        if (characteristic->uuid() == characteristic_uuid) {
+            auto flags = characteristic->flags();
+            if (std::find(flags.begin(), flags.end(), "notify") != flags.end()) {
+                characteristic->value(value);
+            }
+        }
+    }
 }
 
 void AdapterLinux::create_advertisement(const AdvertisementData& advertisement_data) {

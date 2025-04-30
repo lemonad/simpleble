@@ -60,6 +60,7 @@ class AdapterBase {
     virtual void start_advertisement() = 0;
     virtual void stop_advertisement() = 0;
     virtual void run_once() = 0;
+    virtual void notify_characteristic(const std::string& characteristic_uuid, const ByteArray& value) = 0;
 
     virtual std::vector<std::shared_ptr<PeripheralBase>> get_paired_peripherals() = 0;
     virtual std::vector<std::shared_ptr<PeripheralBase>> get_connected_peripherals() { return {}; };

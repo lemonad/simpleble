@@ -68,6 +68,7 @@ class SIMPLEBLE_EXPORT Adapter {
     void start_advertisement();
     void stop_advertisement();
     void run_once();
+    void notify_characteristic(const std::string& characteristic_uuid, const ByteArray& value);
 
     void set_callback_on_scan_start(std::function<void()> on_scan_start);
     void set_callback_on_scan_stop(std::function<void()> on_scan_stop);

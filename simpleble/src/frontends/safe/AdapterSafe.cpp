@@ -202,5 +202,15 @@ bool Safe::Adapter::run_once() {
     }
 }
 
+bool Safe::Adapter::notify_characteristic(const std::string& characteristic_uuid, const ByteArray& value) noexcept {
+    try {
+        internal_.notify_characteristic(characteristic_uuid, value);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+
 
 
