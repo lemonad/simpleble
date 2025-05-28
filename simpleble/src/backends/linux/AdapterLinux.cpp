@@ -161,7 +161,7 @@ void AdapterLinux::create_advertisement(const AdvertisementData& advertisement_d
     custom_advertisement_->local_name(advertisement_data.name);
 
     std::vector<std::string> suuids = { "156b5250-9a84-4cfa-b636-7cef0aec4ccd" };
-    custom_advertisement->service_uuids(suuids);
+    custom_advertisement_->service_uuids(suuids);
 }
 
 void AdapterLinux::start_advertisement() {
